@@ -4,11 +4,12 @@ A Retrieval Augmented Generation (RAG) system for accessing and querying informa
 
 [![Day 0](https://img.youtube.com/vi/0U-SMbpEHbg/0.jpg)](https://youtu.be/0U-SMbpEHbg)
 
-Current functionality: Runs locally, queries Executive Orders, provides relevant EO responsive to each prompt. 
-Currently lacks chat functionality (isn't integrated with LLM).
-Next: Integrate LLM for chat functionality. 
-Integrate with Azure AI. 
-Add authentication. 
+- **Current functionality**: Runs locally, queries Executive Orders, provides relevant EO responsive to each prompt. 
+- **Currently missing**: Chat functionality (isn't integrated with LLM).
+- **Next**: 
+  - Integrate LLM for chat functionality. 
+  - Integrate with Azure AI. 
+  - Add authentication. 
 
 
 ## Features
