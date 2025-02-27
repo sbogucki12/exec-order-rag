@@ -1,0 +1,65 @@
+.env 
+
+# Data Directories
+/data/
+/dataset/
+/datasets/
+/raw_data/
+/processed_data/
+
+# Large Model Files and Checkpoints
+*.pth
+*.pt
+*.ckpt
+*.model
+/models/
+/checkpoints/
+
+# Environment and Sensitive Files
+.env
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+secrets.json
+
+# Specific RAG-related Ignored Files
+processed_chunks.json
+embeddings.json
+vector_store/
+
+# Python-specific Ignores
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+env/
+.venv/
+.env/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Logs and Databases
+*.log
+*.sqlite
+*.db
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# IDE and Editor Folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Specific Large Generated Files
+*.csv
+*.json
+*.xlsx
