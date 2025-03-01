@@ -2,12 +2,25 @@
 
 A Retrieval Augmented Generation (RAG) system for accessing and querying information about executive orders and government guidance documents.
 
-[![Day 1](https://img.youtube.com/vi/tAsKa2ularM/0.jpg)](https://youtu.be/tAsKa2ularM)
+[![Day 3](https://img.youtube.com/vi/trdSEOc1WEk/0.jpg)](https://youtu.be/trdSEOc1WEk)
 
 
 ## Development Timeline 
 
-### Day 1 
+### Day 3
+- **Current functionality**: Enhanced admin capabilities, fixed prompt limitations, added usage statistics.
+- **Accomplishments**:
+  - Created a dedicated admin dashboard separate from the main UI
+  - Successfully implemented prompt limitations to control usage
+  - Added privacy-focused user statistics with masked IP display
+  - Added usage data visualization with charts
+  - Fixed various bugs in the usage tracking system
+- **Next**:
+  - Create a clean, simple custom UI
+  - Add authentication for users who want unlimited access
+  - Prepare for public deployment
+
+### Day 2 
 - **Current functionality**: Full chat functionality with executive orders
 - **Currently missing**: Limit on number of prompts. 
 - **Next**: 
@@ -15,7 +28,7 @@ A Retrieval Augmented Generation (RAG) system for accessing and querying informa
   - Move admin features to a separate protected admin console. 
   - Add authentication. 
 
-### Day 0
+### Day 1
 - **Current functionality**: Runs locally, queries Executive Orders, provides relevant EO responsive to each prompt. 
 - **Currently missing**: Chat functionality (isn't integrated with LLM).
 - **Next**: 
@@ -31,31 +44,51 @@ A Retrieval Augmented Generation (RAG) system for accessing and querying informa
 - **Local Testing**: Develop and test locally before deploying to Azure
 - **Command-line Interface**: Interactive CLI for testing the RAG system
 - **Web Interface**: Streamlit-based web UI for user-friendly access
+- **Admin Dashboard**: Separate admin panel for managing settings and viewing statistics
+- **Usage Limits**: Control the number of prompts users can submit
+- **Usage Analytics**: Track and visualize usage statistics with privacy protection
 
 ## Project Structure
 
 ```
 azure-rag-chatbot/
-├── .env                  # Environment variables (API keys, etc.)
-├── app.py                # Streamlit web application
-├── config.py             # Configuration settings
-├── requirements.txt      # Dependencies
-├── README.md             # Project documentation
+├── .env                     # Environment variables (API keys, etc.)
+├── app.py                   # Streamlit web application
+├── config.py                # Configuration settings
+├── requirements.txt         # Dependencies
+├── README.md                # Project documentation
+├── pages/                   # Streamlit multi-page app components
+│   └── 01_Admin_Dashboard.py   # Admin dashboard interface
+├── data/                    # Data storage
+│   ├── vector_store.json    # Vector storage for embeddings
+│   └── usage_tracking.json  # Usage statistics tracking
 ├── scripts/
-│   ├── ingest.py         # Document ingestion script
-│   ├── embed.py          # Embedding generation script
-│   ├── create_index.py   # Index creation script
-│   ├── search.py         # Vector search script
-│   └── rag_cli.py        # Command-line interface for RAG
+│   ├── ingest.py                  # Document ingestion script
+│   ├── embed.py                   # Embedding generation script
+│   ├── create_index.py            # Index creation script
+│   ├── search.py                  # Vector search script
+│   ├── simple_azure_search.py     # Simplified Azure search implementation
+│   ├── simple_azure_upload.py     # Simplified Azure upload implementation
+│   ├── test_azure_foundry.py      # Test scripts for Azure AI Foundry
+│   ├── test_azure_search.py       # Test scripts for Azure Search
+│   ├── upload_to_azure.py         # Azure upload utilities
+│   └── rag_cli.py                 # Command-line interface for RAG
 └── src/
-    ├── document_processor.py  # Document chunking and processing
-    ├── embeddings.py          # Embedding generation
-    ├── vector_store.py        # Vector search functionality
-    ├── rag.py                 # Core RAG functionality
-    └── llm.py                 # LLM integration (to be implemented)
+    ├── document_processor.py      # Document chunking and processing
+    ├── embeddings.py              # Embedding generation
+    ├── vector_store.py            # Vector search functionality
+    ├── rag.py                     # Core RAG functionality
+    ├── simple_azure_rag.py        # Simplified Azure RAG implementation
+    ├── azure_rag.py               # Azure RAG implementation
+    ├── azure_search.py            # Azure Search integration
+    ├── azure_openai_llm.py        # Azure OpenAI integration
+    ├── llm_factory.py             # Factory for creating LLM instances
+    ├── llm.py                     # LLM integration
+    ├── usage_config.py            # Configuration for usage limits
+    ├── usage_integration.py       # Integration of usage limiting with UI
+    ├── usage_limiter.py           # Core usage limiting functionality
+    └── admin_ips.txt              # List of admin IP addresses
 ```
-
-**TO DO** Update Project Structure 
 
 ## Setup Instructions
 
@@ -125,6 +158,19 @@ Or run the Streamlit web application:
 streamlit run app.py
 ```
 
+### Accessing the Admin Dashboard
+
+The admin dashboard provides access to:
+- Usage limiting configuration
+- User statistics and visualizations
+- LLM settings
+- RAG configuration
+
+To access the admin dashboard:
+1. Run the application with `streamlit run app.py`
+2. If you're an admin user, you'll see an "Open Admin Dashboard" button in the sidebar
+3. If not, you'll need to add your IP to the admin list using the IP Management section
+
 ## Azure Integration
 
 ### Required Azure Resources
@@ -133,6 +179,7 @@ For a production deployment, the following Azure resources are needed:
 
 - **Azure AI Search**: For vector storage and search
 - **Azure OpenAI Service**: For embeddings and text generation
+- **Azure AI Foundry**: For AI model hosting and management
 - **Azure Storage Account**: For document storage
 - **Azure App Service**: For hosting the web application
 
@@ -163,14 +210,12 @@ The Streamlit web interface provides a user-friendly way to search for informati
 
 2. Open your browser and navigate to http://localhost:8501
 
-3. Enter the path to your vector store index file and click "Load Vector Store"
-
-4. Enter your question and click "Search"
+3. Ask questions about executive orders in the chat interface
 
 ## Future Enhancements
 
+- **Custom UI**: Create a clean, modern interface beyond the default Streamlit appearance
 - **Authentication System**: Implement user authentication for access control
-- **Usage Tracking**: Track and limit user queries
 - **Payment Integration**: Add payment functionality for subscription-based access
 - **Advanced Search Features**: Filters, sorting, and faceted search
 - **Document Management UI**: Interface for managing document sources

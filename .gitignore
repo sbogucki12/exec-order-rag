@@ -1,4 +1,5 @@
 .env 
+prompt03012025.txt
 
 # Data Directories
 /data/
@@ -63,3 +64,33 @@ Thumbs.db
 *.csv
 *.json
 *.xlsx
+
+# Usage tracking data
+usage_tracking.json
+data/usage_tracking.json
+**/admin_ips.txt
+
+# Streamlit-specific files
+.streamlit/secrets.toml
+.streamlit/config.toml
+
+# Azure configuration files
+azure_credentials.json
+azure_config.json
+
+# Temporary test files and debug outputs
+temp/
+debug/
+*_test.*
+test_output/
+
+# Log files specific to your project
+**/*.log
+logs/
+
+# Build directories if you plan to package your application
+dist/
+build/
+
+# Generated files from your application
+**/vector_store.json

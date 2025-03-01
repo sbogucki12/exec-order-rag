@@ -242,18 +242,23 @@ class UsageLimiter:
         # Save updated data
         self._save_usage_data()
     
-    def get_usage_stats(self, ip: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Get usage statistics.
-        
+    def get_usage_stats(self, ip: Optional[str] = None, admin_ip: Optional[str] = None) -> Dict[str, Any]:
+        """Get usage statistics.
+    
         Args:
-            ip: Optional IP to get stats for. If None, returns all stats.
+        ip: Optional IP to get stats for. If None, returns all stats.
+        admin_ip: IP of the admin requesting the stats.
             
         Returns:
-            Dictionary of usage statistics
-        """
+        Dictionary of usage statistics"""
+
+    # First check if this is an admin request
+        is_admin = False
+        if admin_ip and self.is_admin_ip(admin_ip):
+            is_admin = True
+        
         # Only admin IPs can see all stats
-        if ip is None or not self.is_admin_ip(ip):
+        if not is_admin:
             return {"error": "Unauthorized access to usage statistics"}
             
         if ip and ip in self.usage_data["usage"]:
