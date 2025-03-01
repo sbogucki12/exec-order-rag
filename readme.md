@@ -2,7 +2,7 @@
 
 A Retrieval Augmented Generation (RAG) system for accessing and querying information about executive orders and government guidance documents.
 
-[![Day 1](https://img.youtube.com/vi/-fV4sNgSloo/0.jpg)](https://youtu.be/-fV4sNgSloo)
+[![Day 1](https://img.youtube.com/vi/tAsKa2ularM/0.jpg)](https://youtu.be/tAsKa2ularM)
 
 
 ## Development Timeline 
