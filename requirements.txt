@@ -1,16 +1,19 @@
 # Core dependencies
 python-dotenv==1.0.0
-langchain==0.0.267
-langchain-community==0.0.10
+langchain==0.1.0
+langchain-community==0.0.16
+langchain-core==0.1.16
 sentence-transformers==2.2.2
-tiktoken==0.5.1
+tiktoken==0.5.2
+huggingface_hub==0.16.4
+transformers==4.30.2
 
 # Document processing
-pypdf==3.15.1
+pypdf==3.17.1
 python-docx==0.8.11
 docx2txt==0.8
-unstructured==0.10.30
-unstructured-inference==0.6.6
+unstructured==0.11.6
+unstructured-inference==0.7.5
 pdf2image==1.16.3
 pytesseract==0.3.10
 
@@ -18,11 +21,19 @@ pytesseract==0.3.10
 azure-search-documents==11.4.0
 azure-identity==1.14.0
 azure-storage-blob==12.17.0
-openai==0.28.1
+openai==1.6.1  # Updated for Azure OpenAI compatibility
 
 # Web UI
-streamlit==1.26.0
+streamlit==1.32.0
 
 # Data processing
 numpy==1.25.2
-pandas==2.1.0
+pandas==2.2.1
+
+# Usage dashboard
+matplotlib==3.8.3
+seaborn==0.13.0
+ipaddress==1.0.23
+
+# Requests for API calls
+requests==2.31.0

@@ -2,8 +2,20 @@
 
 A Retrieval Augmented Generation (RAG) system for accessing and querying information about executive orders and government guidance documents.
 
-[![Day 0](https://img.youtube.com/vi/0U-SMbpEHbg/0.jpg)](https://youtu.be/0U-SMbpEHbg)
+[![Day 1](https://img.youtube.com/vi/-fV4sNgSloo/0.jpg)](https://youtu.be/-fV4sNgSloo)
 
+
+## Development Timeline 
+
+### Day 1 
+- **Current functionality**: Full chat functionality with executive orders
+- **Currently missing**: Limit on number of prompts. 
+- **Next**: 
+  - Limit number of prompts. 
+  - Move admin features to a separate protected admin console. 
+  - Add authentication. 
+
+### Day 0
 - **Current functionality**: Runs locally, queries Executive Orders, provides relevant EO responsive to each prompt. 
 - **Currently missing**: Chat functionality (isn't integrated with LLM).
 - **Next**: 
@@ -42,6 +54,8 @@ azure-rag-chatbot/
     ├── rag.py                 # Core RAG functionality
     └── llm.py                 # LLM integration (to be implemented)
 ```
+
+**TO DO** Update Project Structure 
 
 ## Setup Instructions
 
@@ -155,17 +169,12 @@ The Streamlit web interface provides a user-friendly way to search for informati
 
 ## Future Enhancements
 
-- **Azure OpenAI Integration**: Connect to Azure OpenAI for advanced language model capabilities
 - **Authentication System**: Implement user authentication for access control
 - **Usage Tracking**: Track and limit user queries
 - **Payment Integration**: Add payment functionality for subscription-based access
 - **Advanced Search Features**: Filters, sorting, and faceted search
 - **Document Management UI**: Interface for managing document sources
 
-## License
-
-[License information]
-
 ## Contact
 
-[Contact information]
+[LinkedIn](https://www.linkedin.com/in/sbogucki12/)
