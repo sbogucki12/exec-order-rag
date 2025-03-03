@@ -1,0 +1,420 @@
+/* App.css */
+:root {
+    --primary-color: #2c5282;
+    --secondary-color: #4299e1;
+    --bg-color: #f7fafc;
+    --text-color: #2d3748;
+    --light-gray: #e2e8f0;
+    --white: #ffffff;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+  }
+  
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  
+  .app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--light-gray);
+  }
+  
+  .app-header h1 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  .login-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .login-button:hover {
+    background-color: var(--secondary-color);
+  }
+  
+  .chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+  }
+  
+  .messages-container {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: var(--white);
+    box-shadow: var(--box-shadow);
+  }
+  
+  .welcome-message {
+    text-align: center;
+    margin: 2rem 0;
+    color: var(--text-color);
+  }
+  
+  .welcome-message h2 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+  }
+  
+  .message {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    max-width: 80%;
+  }
+  
+  .user-message {
+    background-color: var(--secondary-color);
+    color: var(--white);
+    align-self: flex-end;
+    margin-left: auto;
+  }
+  
+  .bot-message {
+    background-color: var(--light-gray);
+    align-self: flex-start;
+  }
+  
+  .input-form {
+    display: flex;
+    margin-top: 1rem;
+  }
+  
+  .input-form input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--light-gray);
+    border-radius: 4px 0 0 4px;
+    font-size: 1rem;
+  }
+  
+  .input-form button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0 1.5rem;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+  }
+  
+  .input-form button:disabled {
+    background-color: var(--light-gray);
+    cursor: not-allowed;
+  }
+  
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    column-gap: 0.5rem;
+  }
+  
+  .typing-indicator span {
+    height: 8px;
+    width: 8px;
+    background-color: var(--text-color);
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.4;
+    animation: typingAnimation 1s infinite ease-in-out;
+  }
+  
+  .typing-indicator span:nth-child(1) {
+    animation-delay: 0s;
+  }
+  
+  .typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  
+  @keyframes typingAnimation {
+    0% {
+      transform: translateY(0px);
+      opacity: 0.4;
+    }
+    50% {
+      transform: translateY(-5px);
+      opacity: 0.8;
+    }
+    100% {
+      transform: translateY(0px);
+      opacity: 0.4;
+    }
+  }
+  
+  .app-footer {
+    padding: 1rem 0;
+    border-top: 1px solid var(--light-gray);
+  }
+  
+  .app-footer nav {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+  }
+  
+  .app-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+  
+  .app-footer a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal-content {
+    background-color: var(--white);
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 100%;
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .modal-header h2 {
+    color: var(--primary-color);
+  }
+  
+  .close-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-color);
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--light-gray);
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+  }
+  
+  .form-actions button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .primary-button {
+    background-color: var(--primary-color);
+    color: var(--white);
+  }
+  
+  .secondary-button {
+    background-color: var(--light-gray);
+    color: var(--text-color);
+  }
+  
+  .subscription-options {
+    margin-top: 1.5rem;
+  }
+  
+  .subscription-option {
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: border-color 0.3s;
+  }
+  
+  .subscription-option:hover {
+    border-color: var(--secondary-color);
+  }
+  
+  .subscription-option.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(66, 153, 225, 0.1);
+  }
+  
+  .subscription-option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .subscription-option-price {
+    font-weight: bold;
+    color: var(--primary-color);
+  }
+  
+  .subscription-option-features {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .option-divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: var(--text-color);
+  }
+  
+  .option-divider::before,
+  .option-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--light-gray);
+  }
+  
+  .option-divider::before {
+    margin-right: 1rem;
+  }
+  
+  .option-divider::after {
+    margin-left: 1rem;
+  }
+  
+  /* User menu */
+  .user-menu {
+    position: relative;
+  }
+  
+  .user-profile {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+  }
+  
+  .user-profile:hover {
+    background-color: var(--light-gray);
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 0.5rem;
+  }
+  
+  .user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: var(--white);
+    border-radius: 4px;
+    box-shadow: var(--box-shadow);
+    min-width: 200px;
+    overflow: hidden;
+  }
+  
+  .user-dropdown ul {
+    list-style: none;
+  }
+  
+  .user-dropdown li {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+  }
+  
+  .user-dropdown li:hover {
+    background-color: var(--light-gray);
+  }
+  
+  .user-dropdown .username {
+    font-weight: bold;
+    border-bottom: 1px solid var(--light-gray);
+  }
+  
+  .user-dropdown .subscription {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .app-header h1 {
+      font-size: 1.2rem;
+    }
+    
+    .message {
+      max-width: 90%;
+    }
+  }

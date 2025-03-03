@@ -2,6 +2,7 @@
 Azure OpenAI LLM integration for RAG chatbot.
 """
 import os
+import openai
 from typing import List, Dict, Any, Optional
 from openai import AzureOpenAI
 from config import (
@@ -21,12 +22,19 @@ class AzureLLM:
         temperature: float = 0.7,
         max_tokens: int = 800,
     ):
-        """Initialize the Azure OpenAI client."""
-        self.client = AzureOpenAI(
-            api_key=AZURE_OPENAI_API_KEY,
-            api_version=api_version,
-            azure_endpoint=AZURE_OPENAI_ENDPOINT,
-        )
+        print("Using OpenAI version:", openai.__version__)
+        
+        try:         
+            """Initialize the Azure OpenAI client."""
+            self.client = AzureOpenAI(
+                api_key=AZURE_OPENAI_API_KEY,
+                api_version=api_version,
+                azure_endpoint=AZURE_OPENAI_ENDPOINT,
+            )
+            print("AzureOpenAI initialized successfully!")
+        except Exception as e:
+             print("Error initializing Azure OpenAI:", str(e))
+             
         self.deployment_name = deployment_name
         self.temperature = temperature
         self.max_tokens = max_tokens
