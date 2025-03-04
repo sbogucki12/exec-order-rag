@@ -9,7 +9,7 @@ A Retrieval Augmented Generation (RAG) system for accessing and querying informa
 ### Day 5
 - **Current functionality**: Integrated Stripe payment system, updated admin dashboard, and improved frontend user experience.
 - **Accomplishments**:
-  - Implemented Stripe payment processing for premium subscriptions
+  - Starting implementing Stripe payment processing for premium subscriptions
   - Added secure password protection to the admin dashboard
   - Created new React components for subscription management
   - Added chat history and account management pages
