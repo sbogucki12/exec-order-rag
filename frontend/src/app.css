@@ -180,6 +180,59 @@
       opacity: 0.4;
     }
   }
+
+  /* Button styles */
+.primary-button, 
+.secondary-button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  font-size: 0.9rem;
+  border: none;
+}
+
+.primary-button {
+  background-color: #2c5282;
+  color: white;
+}
+
+.primary-button:hover {
+  background-color: #1e3a8a;
+}
+
+.primary-button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  background-color: #e2e8f0;
+  color: #2d3748;
+  border: 1px solid #cbd5e0;
+}
+
+.secondary-button:hover {
+  background-color: #cbd5e0;
+  border-color: #a0aec0;
+}
+
+.secondary-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Style links in user dropdown to look like buttons */
+.user-dropdown li {
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  transition: background-color 0.2s;
+}
+
+.user-dropdown li:hover {
+  background-color: #f7fafc;
+}
   
   .app-footer {
     padding: 1rem 0;
@@ -418,3 +471,181 @@
       max-width: 90%;
     }
   }
+
+/* Account page styles */
+.account-container {
+  flex: 1;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.account-section {
+  background-color: var(--white);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--box-shadow);
+}
+
+.account-section h2 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 0.5rem;
+}
+
+/* Subscription status styles */
+.subscription-status {
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: var(--light-gray);
+  margin-bottom: 1rem;
+}
+
+.subscription-status.premium {
+  background-color: rgba(66, 153, 225, 0.1);
+  border: 1px solid var(--secondary-color);
+}
+
+.subscription-status.free {
+  background-color: rgba(226, 232, 240, 0.6);
+}
+
+.subscription-details {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--light-gray);
+}
+
+.subscription-cancelling {
+  color: #e53e3e;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.cancel-button {
+  margin-top: 1rem;
+}
+
+/* Payment form styles */
+.payment-form {
+  padding: 1.5rem;
+  border-radius: 8px;
+  background-color: var(--white);
+}
+
+.payment-form h2 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Subscription success & cancel pages */
+.subscription-success-page,
+.subscription-cancel-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: var(--bg-color);
+}
+
+.subscription-success-content,
+.subscription-cancel-content {
+  background-color: var(--white);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.subscription-success-content h1 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+}
+
+.subscription-cancel-content h1 {
+  color: #4a5568;
+  margin-bottom: 1.5rem;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Clear chat button */
+.clear-button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 1rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.clear-button:hover {
+  color: var(--secondary-color);
+}
+
+/* Subscription success & cancel pages */
+.subscription-success-page,
+.subscription-cancel-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: var(--bg-color);
+}
+
+.subscription-success-content,
+.subscription-cancel-content {
+  background-color: var(--white);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.subscription-success-content h1 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+}
+
+.subscription-cancel-content h1 {
+  color: #4a5568;
+  margin-bottom: 1.5rem;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.clear-button {
+  background: none;
+  border: none;
+  color: #2c5282;  /* Using your primary color */
+  cursor: pointer;
+  font-size: 1rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.clear-button:hover {
+  color: #4299e1;  /* Using your secondary color */
+}

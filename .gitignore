@@ -116,3 +116,29 @@ build/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Stripe-related files
+stripe_logs/
+stripe_webhooks/
+
+# User database files
+data/users.json
+users.json
+
+# Payment integration temporary files
+**/payment_*.json
+payment_logs/
+
+# React build files
+frontend/build/
+frontend/dist/
+
+# React environment files
+frontend/.env*
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+
+# Payment testing artifacts
+**/test_cards.txt
+**/subscription_test_logs/

@@ -85,6 +85,26 @@ def save_users(users):
     with open(USER_DB_FILE, 'w') as f:
         json.dump(users, f, indent=2)
 
+def update_user_schema():
+    """Update existing users to include Stripe fields if they don't exist"""
+    users = load_users()
+    updated = False
+    
+    for user_id, user in users.items():
+        if 'stripe_customer_id' not in user:
+            user['stripe_customer_id'] = None
+            updated = True
+        if 'subscription_id' not in user:
+            user['subscription_id'] = None
+            updated = True
+    
+    if updated:
+        save_users(users)
+        print("Updated user schema with Stripe fields")
+
+# Call this function during application startup
+update_user_schema()
+
 def token_required(f):
     """Decorator for JWT token authentication"""
     @wraps(f)
@@ -142,7 +162,9 @@ def register():
         'password_hash': generate_password_hash(data['password']),
         'plan': data.get('plan', 'free'),
         'created_at': datetime.datetime.utcnow().isoformat(),
-        'last_login': None
+        'last_login': None,
+        'stripe_customer_id': None,  # Added field for Stripe customer ID
+        'subscription_id': None      # Added field for Stripe subscription ID
     }
     
     save_users(users)
@@ -300,10 +322,10 @@ def get_profile(current_user):
         'last_login': current_user['last_login']
     }), 200
 
-@app.route('/api/user/upgrade', methods=['POST'])
+""" @app.route('/api/user/upgrade', methods=['POST'])
 @token_required
 def upgrade_plan(current_user):
-    """Upgrade user to premium plan"""
+    Upgrade user to premium plan
     # This would integrate with your payment processor (e.g., Stripe)
     # For now, we'll simulate a successful payment
     
@@ -320,7 +342,7 @@ def upgrade_plan(current_user):
     return jsonify({
         'message': 'Plan upgraded successfully',
         'plan': 'premium'
-    }), 200
+    }), 200 """
 
 @app.route('/api/user/history', methods=['GET'])
 @token_required
@@ -354,11 +376,206 @@ def admin_stats():
     usage_data = get_usage_data()
     
     return jsonify(usage_data), 200
+# Import the payment module
+try:
+    from src.payment_integration import create_subscription_for_user, verify_subscription_status
+    STRIPE_AVAILABLE = True
+except ImportError:
+    STRIPE_AVAILABLE = False
+    print("Stripe payment integration not available")
 
+# Add these new routes to your api.py file:
+
+@app.route('/api/payment/create-checkout', methods=['POST'])
+@token_required
+def create_checkout_session(current_user):
+    """Create a checkout session for subscription"""
+    if not STRIPE_AVAILABLE:
+        return jsonify({'error': 'Payment system not available'}), 503
+    
+    try:
+        # Get the success and cancel URLs
+        data = request.json or {}
+        success_url = data.get('success_url')
+        cancel_url = data.get('cancel_url')
+        
+        # Create subscription
+        result = create_subscription_for_user(
+            email=current_user['email'],
+            name=data.get('name'),
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+        
+        # Save the Stripe customer ID to the user record
+        if 'customer_id' in result:
+            users = load_users()
+            user_id = current_user['id']
+            
+            if user_id in users:
+                users[user_id]['stripe_customer_id'] = result['customer_id']
+                save_users(users)
+        
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': f'Error creating checkout session: {str(e)}'}), 500
+
+@app.route('/api/payment/subscription-status', methods=['GET'])
+@token_required
+def check_subscription_status(current_user):
+    """Check the status of a user's subscription"""
+    if not STRIPE_AVAILABLE:
+        return jsonify({'error': 'Payment system not available'}), 503
+    
+    try:
+        # Get the Stripe customer ID
+        customer_id = current_user.get('stripe_customer_id')
+        
+        if not customer_id:
+            return jsonify({
+                'has_active_subscription': False,
+                'message': 'No subscription information found'
+            }), 200
+        
+        # Verify subscription status
+        status = verify_subscription_status(customer_id)
+        
+        # If the user has an active subscription, make sure their plan is set to premium
+        if status.get('has_active_subscription', False):
+            users = load_users()
+            user_id = current_user['id']
+            
+            if user_id in users and users[user_id]['plan'] != 'premium':
+                users[user_id]['plan'] = 'premium'
+                save_users(users)
+        
+        return jsonify(status), 200
+    except Exception as e:
+        return jsonify({'error': f'Error checking subscription: {str(e)}'}), 500
+
+@app.route('/api/payment/webhook', methods=['POST'])
+def stripe_webhook():
+    """Handle Stripe webhook events"""
+    if not STRIPE_AVAILABLE:
+        return jsonify({'error': 'Payment system not available'}), 503
+    
+    try:
+        from src.payment_integration import PaymentHandler
+        
+        # Get webhook secret from environment
+        endpoint_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
+        
+        if not endpoint_secret:
+            return jsonify({'error': 'Webhook secret not configured'}), 500
+        
+        # Get the payload and signature
+        payload = request.data
+        signature = request.headers.get('Stripe-Signature')
+        
+        # Handle the webhook
+        event_type, event_data = PaymentHandler.handle_webhook(
+            payload=payload,
+            signature=signature,
+            endpoint_secret=endpoint_secret
+        )
+        
+        # Process different event types
+        if event_type == 'checkout.session.completed':
+            # Payment was successful
+            customer_id = event_data.get('customer')
+            subscription_id = event_data.get('subscription')
+            
+            if customer_id:
+                # Find user with this customer ID
+                users = load_users()
+                for user_id, user in users.items():
+                    if user.get('stripe_customer_id') == customer_id:
+                        # Update user plan to premium
+                        users[user_id]['plan'] = 'premium'
+                        users[user_id]['subscription_id'] = subscription_id
+                        save_users(users)
+                        break
+        
+        elif event_type == 'customer.subscription.deleted':
+            # Subscription was cancelled
+            customer_id = event_data.get('customer')
+            
+            if customer_id:
+                # Find user with this customer ID
+                users = load_users()
+                for user_id, user in users.items():
+                    if user.get('stripe_customer_id') == customer_id:
+                        # Downgrade user to free plan
+                        users[user_id]['plan'] = 'free'
+                        users[user_id].pop('subscription_id', None)
+                        save_users(users)
+                        break
+        
+        # Acknowledge receipt of the event
+        return jsonify({'status': 'success'}), 200
+    
+    except Exception as e:
+        return jsonify({'error': f'Error processing webhook: {str(e)}'}), 400
+
+# Update the existing upgrade endpoint to use Stripe
+@app.route('/api/user/upgrade', methods=['POST'])
+@token_required
+def upgrade_plan(current_user):
+    """Upgrade user to premium plan"""
+    if STRIPE_AVAILABLE:
+        # If Stripe is available, create a checkout session
+        try:
+            data = request.json or {}
+            
+            # Create subscription
+            result = create_subscription_for_user(
+                email=current_user['email'],
+                success_url=data.get('success_url'),
+                cancel_url=data.get('cancel_url')
+            )
+            
+            # Save the Stripe customer ID to the user record
+            if 'customer_id' in result:
+                users = load_users()
+                user_id = current_user['id']
+                
+                if user_id in users:
+                    users[user_id]['stripe_customer_id'] = result['customer_id']
+                    save_users(users)
+            
+            return jsonify({
+                'message': 'Please complete the checkout process',
+                'checkout_url': result['checkout_url'],
+                'session_id': result['session_id']
+            }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Error creating checkout session: {str(e)}'}), 500
+    else:
+        # If Stripe is not available, use the simulated payment
+        users = load_users()
+        user_id = current_user['id']
+        
+        if users[user_id]['plan'] == 'premium':
+            return jsonify({'message': 'User already has premium plan'}), 400
+        
+        # Update user plan
+        users[user_id]['plan'] = 'premium'
+        save_users(users)
+        
+        return jsonify({
+            'message': 'Plan upgraded successfully',
+            'plan': 'premium'
+        }), 200
+    
+    
 if __name__ == '__main__':
     # Ensure the user database exists
     if not os.path.exists(USER_DB_FILE):
         save_users({})
+    
+    # Update existing user records with Stripe fields
+    update_user_schema()
     
     # Run the Flask app
     app.run(debug=True, port=5000)

@@ -1,9 +1,11 @@
 // components/UserMenu.js
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const UserMenu = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
+  const navigate = useNavigate(); // Add this hook for navigation
 
   // Get initials from email for avatar
   const getInitials = (email) => {
@@ -25,6 +27,12 @@ const UserMenu = ({ user, onLogout }) => {
     };
   }, []);
 
+  // Handle navigation clicks
+  const handleNavigation = (path) => {
+    setIsOpen(false);
+    navigate(path);
+  };
+
   return (
     <div className="user-menu" ref={menuRef}>
       <div className="user-profile" onClick={() => setIsOpen(!isOpen)}>
@@ -41,10 +49,10 @@ const UserMenu = ({ user, onLogout }) => {
             <li className="subscription">
               {user.plan === 'premium' ? 'Premium Plan' : 'Free Plan'}
             </li>
-            <li onClick={() => window.location.href = '/history'}>View History</li>
-            <li onClick={() => window.location.href = '/account'}>Account Settings</li>
+            <li onClick={() => handleNavigation('/history')}>View History</li>
+            <li onClick={() => handleNavigation('/account')}>Account Settings</li>
             {user.plan === 'free' && (
-              <li onClick={() => window.location.href = '/upgrade'}>Upgrade to Premium</li>
+              <li onClick={() => handleNavigation('/account')}>Upgrade to Premium</li>
             )}
             <li onClick={onLogout}>Sign Out</li>
           </ul>

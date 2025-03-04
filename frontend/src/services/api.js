@@ -52,16 +52,23 @@ export const chatService = {
   },
 };
 
-// User services
 export const userService = {
   getProfile: async () => {
     const response = await api.get('/user/profile');
     return response.data;
   },
-  upgradeAccount: async () => {
-    const response = await api.post('/user/upgrade');
+  upgradeAccount: async (redirectUrls) => {
+    const response = await api.post('/user/upgrade', redirectUrls || {});
     return response.data;
   },
+  getSubscriptionStatus: async () => {
+    const response = await api.get('/payment/subscription-status');
+    return response.data;
+  },
+  cancelSubscription: async () => {
+    const response = await api.post('/payment/cancel-subscription');
+    return response.data;
+  }
 };
 
 export default api;

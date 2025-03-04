@@ -10,6 +10,91 @@ import json
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import seaborn as sns
+from pathlib import Path
+
+# Get the current file's directory
+current_dir = Path(__file__).parent
+
+# Add the scripts directory to the Python path
+scripts_dir = os.path.join(os.path.dirname(current_dir), 'scripts')
+sys.path.append(scripts_dir)
+
+from admin_auth import authenticate_admin, logout_admin
+
+
+# Set page configuration first, before any other Streamlit commands
+st.set_page_config(
+    page_title="Admin Dashboard - Executive Orders RAG",
+    page_icon="🔒",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Now import authentication and other components
+# Add the parent directory to sys.path to enable imports from src
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
+
+# Import authentication functions
+sys.path.append(os.path.join(parent_dir, 'scripts'))
+try:
+    from admin_auth import authenticate_admin, logout_admin
+except ImportError:
+    # Fallback implementation if import fails
+    def authenticate_admin():
+        """Simple authentication fallback"""
+        admin_password = os.environ.get('ADMIN_PASSWORD', 'admin-password-change-in-production')
+        
+        if 'admin_authenticated' in st.session_state and st.session_state.admin_authenticated:
+            return True
+            
+        password = st.text_input("Admin Password", type="password")
+        if st.button("Login"):
+            if password == admin_password:
+                st.session_state.admin_authenticated = True
+                st.success("Authentication successful!")
+                st.experimental_rerun()
+                return True
+            else:
+                st.error("Invalid password")
+                return False
+        return False
+        
+    def logout_admin():
+        """Log out admin"""
+        if 'admin_authenticated' in st.session_state:
+            del st.session_state.admin_authenticated
+        st.success("Logged out successfully")
+        st.experimental_rerun()
+
+# Check for direct access authentication
+directly_accessed = True
+try:
+    directly_accessed = not st.session_state.get('from_main_app', False)
+except:
+    directly_accessed = True
+
+# If directly accessed, require password authentication
+if directly_accessed:
+    # Check if user is authenticated
+    if not authenticate_admin():
+        # Stop execution here if not authenticated
+        st.stop()
+    
+    # Add logout button if authenticated
+    col1, col2 = st.columns([9, 1])
+    with col1:
+        st.title("🔒 Admin Dashboard")
+        st.markdown("Administrative controls, configuration, and usage statistics for the Executive Orders RAG system.")
+    with col2:
+        if st.button("Logout", key="logout_button_header"):
+            logout_admin()
+            st.experimental_rerun()
+else:
+    # Normal header if accessed from main app
+    st.title("🔒 Admin Dashboard")
+    st.markdown("Administrative controls, configuration, and usage statistics for the Executive Orders RAG system.")
+
 
 # Add the parent directory to sys.path to enable imports from src
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -75,14 +160,44 @@ def mask_ip(ip):
             return ip[0] + '*' * (len(ip) - 1)
         else:
             return ip[0:2] + '*' * (len(ip) - 4) + ip[-2:]
-        
+
+# Check for direct access authentication
+# If accessed directly by URL, require password authentication
+directly_accessed = True
+try:
+    # Check if this is being accessed from the main app (which would set this variable)
+    directly_accessed = not st.session_state.get('from_main_app', False)
+except:
+    directly_accessed = True
+
+# If directly accessed, require password authentication
+if directly_accessed:
+    # Check if user is authenticated
+    if not authenticate_admin():
+        # Stop execution here if not authenticated
+        st.stop()
+    
+    # Add logout button if authenticated
+    col1, col2 = st.columns([9, 1])
+    with col1:
+        st.title("🔒 Admin Dashboard")
+        st.markdown("Administrative controls, configuration, and usage statistics for the Executive Orders RAG system.")
+    with col2:
+        if st.button("Logout"):
+            logout_admin()
+            st.experimental_rerun()
+else:
+    # Normal header if accessed from main app
+    st.title("🔒 Admin Dashboard")
+    st.markdown("Administrative controls, configuration, and usage statistics for the Executive Orders RAG system.")
+
 # Set page configuration
-st.set_page_config(
+""" st.set_page_config(
     page_title="Admin Dashboard - Executive Orders RAG",
     page_icon="🔒",
     layout="wide",
     initial_sidebar_state="expanded"
-)
+) """
 
 # Header
 st.title("🔒 Admin Dashboard")
@@ -159,7 +274,7 @@ with config_tab:
             "Enabled" if limiter.enabled else "Disabled"
         )
         
-        if st.button("Toggle Limiting Status"):
+        if st.button("Toggle Limiting Status", key="toggle_limiting_button"):
             new_state = limiter.toggle_enabled()
             st.success(f"Usage limiting {'enabled' if new_state else 'disabled'}")
             st.experimental_rerun()
@@ -208,7 +323,7 @@ with config_tab:
             help="Hours before usage counters reset"
         )
     
-    if st.button("Update Limits"):
+    if st.button("Update Limits", key="update_limits_button"):
         # Convert 0 to None for no limit
         prompt_limit_val = None if prompt_limit == 0 else prompt_limit
         token_limit_val = None if token_limit == 0 else token_limit
@@ -628,6 +743,150 @@ with rag_tab:
             st.info(f"Vector store file exists at {index_file}. Click 'Load Vector Store' to initialize the RAG system.")
         else:
             st.error(f"Vector store file not found at {index_file}. Please specify a valid path to a vector store file.")
+# Update the tabs declaration to include the subscription tab
+config_tab, usage_tab, llm_tab, rag_tab, subscription_tab = st.tabs([
+    "💡 Usage Configuration", 
+    "📊 Usage Statistics", 
+    "🤖 LLM Settings",
+    "🔍 RAG Settings",
+    "💲 Subscription Management"
+])
+
+# Later in the file, add this new tab content (after all your existing tabs)
+
+# TAB 5: SUBSCRIPTION MANAGEMENT
+with subscription_tab:
+    st.header("Subscription Management")
+    
+    # User subscription management
+    st.subheader("User Subscriptions")
+    
+    # Load users
+    users_file = 'data/users.json'
+    if os.path.exists(users_file):
+        try:
+            with open(users_file, 'r') as f:
+                users = json.load(f)
+            
+            # Display user subscriptions
+            user_data = []
+            for user_id, user_info in users.items():
+                user_data.append({
+                    "ID": user_id,
+                    "Email": user_info.get('email', 'N/A'),
+                    "Plan": user_info.get('plan', 'free'),
+                    "Stripe Customer ID": user_info.get('stripe_customer_id', 'N/A')[:10] + "..." if user_info.get('stripe_customer_id') else 'N/A',
+                    "Last Login": user_info.get('last_login', 'Never')
+                })
+            
+            if user_data:
+                user_df = pd.DataFrame(user_data)
+                st.dataframe(user_df, use_container_width=True)
+                
+                # User management options
+                st.subheader("Modify User Plan")
+                
+                # Select user
+                selected_user = st.selectbox(
+                    "Select User", 
+                    options=[f"{user['Email']} ({user['ID']})" for user in user_data]
+                )
+                
+                if selected_user:
+                    selected_id = selected_user.split('(')[-1].split(')')[0]
+                    
+                    # Current plan
+                    current_plan = next((user['Plan'] for user in user_data if user['ID'] == selected_id), 'free')
+                    st.info(f"Current plan: {current_plan}")
+                    
+                    # New plan
+                    new_plan = st.selectbox(
+                        "New Plan",
+                        options=["free", "premium"],
+                        index=0 if current_plan == "free" else 1
+                    )
+                    
+                    # Update button
+                    if st.button("Update Plan"):
+                        if selected_id in users:
+                            users[selected_id]['plan'] = new_plan
+                            with open(users_file, 'w') as f:
+                                json.dump(users, f, indent=2)
+                            st.success(f"Updated plan for {users[selected_id]['email']} to {new_plan}")
+                            st.experimental_rerun()
+                        else:
+                            st.error(f"User ID {selected_id} not found")
+            else:
+                st.info("No users found")
+        except Exception as e:
+            st.error(f"Error loading users: {str(e)}")
+    else:
+        st.warning(f"Users file not found at {users_file}")
+    
+    # Stripe configuration
+    st.subheader("Stripe Configuration")
+    
+    # Check if Stripe environment variables are set
+    stripe_key = os.environ.get('STRIPE_SECRET_KEY', None)
+    stripe_pub_key = os.environ.get('STRIPE_PUBLIC_KEY', None)
+    stripe_webhook = os.environ.get('STRIPE_WEBHOOK_SECRET', None)
+    stripe_price_id = os.environ.get('STRIPE_PREMIUM_PRICE_ID', None)
+    
+    status_col1, status_col2 = st.columns(2)
+    
+    with status_col1:
+        # Display configuration status
+        st.markdown("#### Stripe API Status")
+        
+        if stripe_key:
+            st.success("✅ Stripe Secret Key is configured")
+        else:
+            st.error("❌ Stripe Secret Key is missing")
+            
+        if stripe_pub_key:
+            st.success("✅ Stripe Public Key is configured")
+        else:
+            st.error("❌ Stripe Public Key is missing")
+            
+        if stripe_webhook:
+            st.success("✅ Stripe Webhook Secret is configured")
+        else:
+            st.error("❌ Stripe Webhook Secret is missing")
+            
+        if stripe_price_id:
+            st.success("✅ Stripe Premium Price ID is configured")
+        else:
+            st.error("❌ Stripe Premium Price ID is missing")
+    
+    with status_col2:
+        st.markdown("#### Stripe Setup Instructions")
+        st.markdown("""
+        To set up Stripe integration:
+        
+        1. Create a Stripe account
+        2. Set up a subscription product
+        3. Add environment variables to your .env file:
+           - STRIPE_SECRET_KEY
+           - STRIPE_PUBLIC_KEY
+           - STRIPE_WEBHOOK_SECRET
+           - STRIPE_PREMIUM_PRICE_ID
+        
+        See the Stripe Integration Guide for details.
+        """)
+        
+        # Add a button to test Stripe connectivity
+        if stripe_key:
+            if st.button("Test Stripe Connection"):
+                try:
+                    import stripe
+                    stripe.api_key = stripe_key
+                    account = stripe.Account.retrieve()
+                    st.success(f"✅ Successfully connected to Stripe for account: {account.get('email')}")
+                except Exception as e:
+                    st.error(f"❌ Failed to connect to Stripe: {str(e)}")
+        else:
+            st.warning("Configure Stripe API keys to enable testing")
+
 
 # Return to main app button
 st.markdown("---")

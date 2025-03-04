@@ -90,6 +90,12 @@ Expected output:
 - A web interface running at http://localhost:8501
 - Ability to load the vector store and search for information
 
+### To access the Admin Dashboard:
+
+1. Run the script: streamlit run scripts/run_admin.py
+2. Enter the admin password when prompted
+3. The dashboard will be available at http://localhost:8501
+
 ## Testing Specific Components
 
 ### Document Processing
