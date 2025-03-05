@@ -6,6 +6,19 @@ A Retrieval Augmented Generation (RAG) system for accessing and querying informa
 
 ## Development Timeline 
 
+### Day 6
+- **Current functionality**: Added database integration, enhanced user tracking, and improved chat formatting.
+- **Accomplishments**:
+  - Integrated MongoDB database for persistent storage
+  - Added Azure Cosmos DB with MongoDB API support
+  - Implemented user-based usage limiting (not just IP-based)
+  - Created intelligent response formatting for better readability
+  - Added "Coming Soon" modal for premium subscription
+  - Enhanced conversation storage and history tracking
+  - Improved UI for formatted chat responses
+  - Created cleaner paragraph breaks and list formatting
+  - Implemented proper whitespace rendering in UI
+
 ### Day 5
 - **Current functionality**: Integrated Stripe payment system, updated admin dashboard, and improved frontend user experience.
 - **Accomplishments**:
@@ -19,13 +32,6 @@ A Retrieval Augmented Generation (RAG) system for accessing and querying informa
   - Added admin dashboard tab for subscription management
   - Made the admin dashboard independently accessible via direct URL
   - Ensured proper state persistence with localStorage
-- **Next**:
-- - Add Coming Soon to upgrade to Premium option
-- - Throttle by user email
-  - Deploy to production environment
-  - Set up webhook handling for Stripe events
-  - Implement email notifications for subscription changes
-  - Add more detailed analytics for premium users
 
 ### Day 4
 - **Current functionality**: Separated API backend and React frontend, implemented authentication and subscription system.
@@ -75,9 +81,12 @@ A Retrieval Augmented Generation (RAG) system for accessing and querying informa
 - **Subscription Tiers**: Free tier with usage limits and premium tier with unlimited access
 - **Payment Processing**: Stripe integration for subscription management
 - **Admin Dashboard**: Password-protected admin panel for managing settings and viewing statistics
-- **Usage Limits**: Control the number of prompts users can submit
+- **Usage Limits**: Control the number of prompts users can submit per day
 - **Usage Analytics**: Track and visualize usage statistics with privacy protection
 - **Docker Support**: Containerized deployment for both frontend and backend
+- **Cloud Database**: MongoDB integration for persistent data storage
+- **Response Formatting**: Intelligent formatting for better readability 
+- **User-based Tracking**: Usage limiting by user account in addition to IP
 
 ## Project Structure
 
@@ -111,6 +120,7 @@ azure-rag-chatbot/
 │   │   └── robots.txt
 │   ├── src/                 # Source code
 │   │   ├── components/      # React components
+│   │   │   ├── ChatHistory.js
 │   │   │   ├── ChatMessage.js
 │   │   │   ├── LoginModal.js
 │   │   │   ├── UserMenu.js
@@ -139,6 +149,9 @@ azure-rag-chatbot/
 │   ├── rag_cli.py           # Command-line interface for RAG
 │   └── ... 
 ├── src/                     # Core functionality modules
+│   ├── database.py                # MongoDB database integration
+│   ├── response_formatter.py      # Chat response formatting
+│   ├── user_usage_limiter.py      # User-based usage limiting
 │   ├── payment_integration.py     # Stripe payment integration
 │   ├── document_processor.py      # Document chunking and processing
 │   ├── embeddings.py              # Embedding generation
@@ -149,7 +162,7 @@ azure-rag-chatbot/
 │   ├── usage_config.py            # Configuration for usage limits
 │   ├── usage_integration.py       # Integration of usage limiting with UI
 │   ├── usage_limiter.py           # Core usage limiting functionality
-│   └── admin_ips.txt              # List of admin IP addresses
+│   └── ...
 └── test_docs/                     # Test documents for RAG system
 ```
 
@@ -162,6 +175,7 @@ azure-rag-chatbot/
 - Docker and Docker Compose (for containerized deployment)
 - Azure Subscription (for production deployment)
 - Stripe Account (for payment processing)
+- MongoDB (local or MongoDB Atlas/Azure Cosmos DB)
 
 ### Local Development Setup
 
@@ -193,6 +207,28 @@ azure-rag-chatbot/
    ```bash
    cd frontend
    npm install
+   ```
+
+### Database Setup
+
+#### Local MongoDB
+1. Install MongoDB locally:
+   - Windows: Download and install from [MongoDB website](https://www.mongodb.com/try/download/community)
+   - Mac: `brew install mongodb-community`
+   - Linux: `sudo apt install mongodb`
+
+2. Start MongoDB:
+   ```bash
+   mongod --dbpath /path/to/data/directory
+   ```
+
+#### Azure Cosmos DB with MongoDB API
+1. Create an Azure Cosmos DB account with MongoDB API
+2. Get the connection string from Azure Portal
+3. Add to your .env file:
+   ```
+   MONGODB_URI=mongodb://<account-name>:<password>@<account-name>.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false
+   MONGODB_DATABASE=eo_chatbot
    ```
 
 ### Running the Application Locally
@@ -232,6 +268,12 @@ azure-rag-chatbot/
 docker-compose -f docker/docker-compose.yaml up
 ```
 
+This will start:
+- MongoDB database container
+- Flask API backend container
+- React frontend container
+- Streamlit admin dashboard container
+
 ## Using the RAG System
 
 Use the command-line interface for testing:
@@ -261,6 +303,7 @@ For a production deployment, the following Azure resources are needed:
 - **Azure OpenAI Service**: For embeddings and text generation
 - **Azure AI Foundry**: For AI model hosting and management
 - **Azure Storage Account**: For document storage
+- **Azure Cosmos DB**: For database storage with MongoDB API
 - **Azure App Service**: For hosting the web application
 
 ## Future Enhancements
@@ -270,6 +313,8 @@ For a production deployment, the following Azure resources are needed:
 - **Document Management UI**: Interface for managing document sources
 - **Email Notifications**: Send emails for subscription events and account activities
 - **Mobile Optimization**: Enhance the UI for mobile devices
+- **Complete Payment Integration**: Finish implementing the premium subscription system
+- **Fine-tune Response Formatting**: Further improve the text formatting features
 
 ## Contact
 
