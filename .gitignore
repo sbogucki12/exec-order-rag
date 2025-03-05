@@ -1,5 +1,6 @@
 .env 
 prompt03012025.txt
+src/admin_ips.txt
 
 # Data Directories
 /data/
@@ -142,3 +143,33 @@ frontend/.env.production
 # Payment testing artifacts
 **/test_cards.txt
 **/subscription_test_logs/
+
+# MongoDB temporary files and logs
+mongodb.log
+mongod.lock
+*.wt
+*.bson
+mongo_dump/
+mongodb_data/
+
+# Azure Cosmos DB specific
+*.cosmos/
+cosmos_connection.txt
+
+# Password and connection string files
+*_connection_string.txt
+db_passwords.txt
+
+# Any migration logs or backups
+*.migrated
+*_backup.*
+migration_logs/
+
+# Formatter test files
+formatting_tests/
+*_formatted.txt
+format_debug_logs/
+
+# MongoDB Compass and tools
+.mongodb/
+.mongorc.js

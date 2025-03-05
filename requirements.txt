@@ -45,5 +45,8 @@ gunicorn==21.2.0
 pyjwt==2.8.0
 werkzeug==2.3.7
 
+database
+pymongo==4.11.2
+
 
 

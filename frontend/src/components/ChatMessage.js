@@ -5,7 +5,10 @@ const ChatMessage = ({ message }) => {
   const { sender, text } = message;
   
   return (
-    <div className={`message ${sender === 'user' ? 'user-message' : 'bot-message'}`}>
+    <div 
+      className={`message ${sender === 'user' ? 'user-message' : 'bot-message'}`}
+      style={{ whiteSpace: 'pre-wrap' }}
+    >
       {text}
     </div>
   );

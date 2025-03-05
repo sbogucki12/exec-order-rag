@@ -12,12 +12,19 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
+import re
 
 # Import your existing RAG chatbot logic
 import sys
 sys.path.append('.')  # Add the current directory to path
 from src.usage_limiter import UsageLimiter
 from src.usage_integration import get_usage_data, check_admin_status
+from src.database import (
+    get_users, get_user_by_id, get_user_by_email, create_user, update_user,
+    save_chat_message, get_chat_history, get_conversation,
+    track_usage, check_usage_limits, migrate_from_json, setup_admin_collection,
+    is_admin_ip, add_admin_ip
+)
 
 # Import non-Streamlit chatbot processing function
 try:
@@ -68,42 +75,26 @@ except Exception as e:
             pass
     usage_limiter = DummyLimiter()
 
-# Helper functions
-def load_users():
-    """Load users from JSON file"""
+# Set up the admin collection for storing configuration
+setup_admin_collection()
+
+# Migrate existing user data from JSON to MongoDB (only if JSON file exists)
+if os.path.exists(USER_DB_FILE):
     try:
-        with open(USER_DB_FILE, 'r') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # If file doesn't exist or is invalid, return empty dict
-        return {}
+        print(f"Attempting to migrate users from {USER_DB_FILE} to MongoDB...")
+        migrate_from_json(USER_DB_FILE)
+        print("Migration completed successfully.")
+        # Optionally, rename the old file to avoid future migrations
+        os.rename(USER_DB_FILE, f"{USER_DB_FILE}.migrated")
+    except Exception as e:
+        print(f"Error during migration: {e}")
 
-def save_users(users):
-    """Save users to JSON file"""
-    # Ensure directory exists
-    os.makedirs(os.path.dirname(USER_DB_FILE), exist_ok=True)
-    with open(USER_DB_FILE, 'w') as f:
-        json.dump(users, f, indent=2)
-
-def update_user_schema():
-    """Update existing users to include Stripe fields if they don't exist"""
-    users = load_users()
-    updated = False
-    
-    for user_id, user in users.items():
-        if 'stripe_customer_id' not in user:
-            user['stripe_customer_id'] = None
-            updated = True
-        if 'subscription_id' not in user:
-            user['subscription_id'] = None
-            updated = True
-    
-    if updated:
-        save_users(users)
-        print("Updated user schema with Stripe fields")
-
-# Call this function during application startup
-update_user_schema()
+# Helper functions
+def get_client_ip():
+    """Get the client's IP address"""
+    if request.headers.get('X-Forwarded-For'):
+        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    return request.remote_addr
 
 def token_required(f):
     """Decorator for JWT token authentication"""
@@ -122,7 +113,7 @@ def token_required(f):
         try:
             # Decode token
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
-            current_user = load_users().get(payload['user_id'])
+            current_user = get_user_by_id(payload['user_id'])
             
             if not current_user:
                 return jsonify({'error': 'Invalid token'}), 401
@@ -141,7 +132,6 @@ def token_required(f):
 def register():
     """Register a new user"""
     data = request.json
-    users = load_users()
     
     # Validate input
     if not data or not data.get('email') or not data.get('password'):
@@ -150,24 +140,25 @@ def register():
     email = data['email'].lower()
     
     # Check if user already exists
-    for user_id, user in users.items():
-        if user['email'] == email:
-            return jsonify({'error': 'User already exists'}), 409
+    existing_user = get_user_by_email(email)
+    if existing_user:
+        return jsonify({'error': 'User already exists'}), 409
     
     # Create new user
-    user_id = str(uuid.uuid4())
-    users[user_id] = {
-        'id': user_id,
+    user_data = {
         'email': email,
         'password_hash': generate_password_hash(data['password']),
         'plan': data.get('plan', 'free'),
         'created_at': datetime.datetime.utcnow().isoformat(),
         'last_login': None,
-        'stripe_customer_id': None,  # Added field for Stripe customer ID
-        'subscription_id': None      # Added field for Stripe subscription ID
+        'stripe_customer_id': None,
+        'subscription_id': None
     }
     
-    save_users(users)
+    user_id = create_user(user_data)
+    
+    if not user_id:
+        return jsonify({'error': 'Failed to create user'}), 500
     
     # Generate token
     token = jwt.encode({
@@ -180,7 +171,7 @@ def register():
         'user': {
             'id': user_id,
             'email': email,
-            'plan': users[user_id]['plan']
+            'plan': user_data['plan']
         }
     }), 201
 
@@ -188,7 +179,6 @@ def register():
 def login():
     """Log in an existing user"""
     data = request.json
-    users = load_users()
     
     # Validate input
     if not data or not data.get('email') or not data.get('password'):
@@ -197,33 +187,25 @@ def login():
     email = data['email'].lower()
     
     # Find user by email
-    user_id = None
-    user = None
-    
-    for uid, u in users.items():
-        if u['email'] == email:
-            user_id = uid
-            user = u
-            break
+    user = get_user_by_email(email)
     
     # Check if user exists and password is correct
     if not user or not check_password_hash(user['password_hash'], data['password']):
         return jsonify({'error': 'Invalid email or password'}), 401
     
     # Update last login time
-    users[user_id]['last_login'] = datetime.datetime.utcnow().isoformat()
-    save_users(users)
+    update_user(user['id'], {'last_login': datetime.datetime.utcnow().isoformat()})
     
     # Generate token
     token = jwt.encode({
-        'user_id': user_id,
+        'user_id': user['id'],
         'exp': datetime.datetime.utcnow() + TOKEN_EXPIRY
     }, JWT_SECRET_KEY)
     
     return jsonify({
         'token': token,
         'user': {
-            'id': user_id,
+            'id': user['id'],
             'email': user['email'],
             'plan': user['plan']
         }
@@ -234,13 +216,13 @@ def login():
 def chat():
     """Process a chat message and return a response"""
     data = request.json
-    client_ip = request.remote_addr
+    client_ip = get_client_ip()
     
     if not data or not data.get('message'):
         return jsonify({'error': 'No message provided'}), 400
     
     message = data.get('message')
-    user_id = data.get('user_id', 'anonymous')
+    conversation_id = data.get('conversation_id', str(uuid.uuid4()))
     chat_history = data.get('history', [])
     
     # Check if the user is authenticated
@@ -251,16 +233,36 @@ def chat():
         token = auth_header.split(' ')[1]
         try:
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
-            users = load_users()
-            user = users.get(payload['user_id'])
+            user = get_user_by_id(payload['user_id'])
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
             # Token is invalid, but we'll still process as anonymous
             pass
     
-    # Check usage limits if not a premium user
-    if not user or user['plan'] != 'premium':
+    # Check usage limits based on user if authenticated, otherwise use IP
+    if user:
+        # Import and use user-based limiter
+        from src.user_usage_limiter import UserUsageLimiter
+        user_limiter = UserUsageLimiter()
+        
+        # Check if user is premium
+        if user['plan'] != 'premium':
+            try:
+                is_allowed, reason = user_limiter.check_limits(user['id'])
+                if not is_allowed:
+                    return jsonify({
+                        'error': f'You have reached your daily usage limit. {reason}'
+                    }), 429
+            except Exception as e:
+                print(f"Warning: Error checking user usage limits: {str(e)}")
+                # Continue processing even if limit checking fails
+    else:
+        # Fall back to IP-based limiting for anonymous users
         try:
-            is_allowed, reason = usage_limiter.check_limits(client_ip)
+            # Get limits from environment or use defaults
+            prompt_limit = int(os.environ.get('PROMPT_LIMIT', 20))
+            token_limit = int(os.environ.get('TOKEN_LIMIT', 10000))
+            
+            is_allowed, reason = check_usage_limits(client_ip, prompt_limit, token_limit)
             if not is_allowed:
                 return jsonify({
                     'error': f'You have reached your daily usage limit. {reason}'
@@ -271,6 +273,12 @@ def chat():
     
     # Process the request through your RAG chatbot
     try:
+        # Look for EO number in the query for formatting context
+        eo_context = {}
+        eo_match = re.search(r'executive order (\d+)', message, re.IGNORECASE)
+        if eo_match:
+            eo_context['eo_number'] = eo_match.group(1)
+        
         # Handle the case where process_query might not accept chat_history
         response_text = None
         try:
@@ -286,22 +294,70 @@ def chat():
         # Ensure we have a valid response
         if response_text is None:
             response_text = f"Sorry, I couldn't process your question about: {message}"
-                
-        # Log usage if not premium
-        if not user or user['plan'] != 'premium':
-            try:
-                # Try track_request first (the method in your actual implementation)
-                if hasattr(usage_limiter, 'track_request'):
-                    usage_limiter.track_request(client_ip, tokens_used=0, request_type="api", request_data={"query": message[:100]})
-                # Fall back to log_usage if track_request is not available
-                elif hasattr(usage_limiter, 'log_usage'):
-                    usage_limiter.log_usage(client_ip)
-            except Exception as e:
-                print(f"Warning: Failed to log usage: {e}")
-                # Continue without logging usage
         
-        # Always return a valid response
-        return jsonify({'response': response_text}), 200
+        # Format the response for better readability
+        
+        from src.response_formatter import format_response
+        
+        if response_text:
+        # Log before formatting
+            print("BEFORE FORMATTING:")
+            print(response_text[:200] + "...")
+            
+            # Apply formatting
+            try:
+                formatted_response = format_response(response_text, eo_context)
+                print("AFTER FORMATTING:")
+                print(formatted_response[:200] + "...")
+            except Exception as e:
+                print(f"Formatting error: {e}")
+                formatted_response = response_text  # Fall back to unformatted response
+        formatted_response = format_response(response_text, eo_context)
+
+        # Log usage
+        try:
+            # Estimate token usage - this is a very basic estimation
+            token_estimate = len(message.split()) + len(response_text.split())
+            
+            # Track in database based on user or IP
+            if user:
+                # Track user-based usage
+                user_limiter.track_request(
+                    user['id'], 
+                    token_estimate, 
+                    "prompt", 
+                    {"query": message[:100]}
+                )
+            else:
+                # Fall back to IP-based tracking
+                track_usage(client_ip, token_estimate, "prompt", {"query": message[:100]})
+                
+        except Exception as e:
+            print(f"Warning: Failed to log usage: {e}")
+        
+        # Save to chat history if user is authenticated
+        if user:
+            user_message = {
+                "sender": "user",
+                "text": message,
+                "timestamp": datetime.datetime.utcnow().isoformat()
+            }
+            
+            bot_message = {
+                "sender": "bot",
+                "text": formatted_response,  # Store the formatted response
+                "timestamp": datetime.datetime.utcnow().isoformat()
+            }
+            
+            # Save both messages
+            save_chat_message(user["id"], conversation_id, user_message)
+            save_chat_message(user["id"], conversation_id, bot_message)
+        
+        # Always return a valid response - now with formatting
+        return jsonify({
+            'response': formatted_response,
+            'conversation_id': conversation_id
+        }), 200
         
     except Exception as e:
         # Handle any errors during processing
@@ -322,60 +378,80 @@ def get_profile(current_user):
         'last_login': current_user['last_login']
     }), 200
 
-""" @app.route('/api/user/upgrade', methods=['POST'])
-@token_required
-def upgrade_plan(current_user):
-    Upgrade user to premium plan
-    # This would integrate with your payment processor (e.g., Stripe)
-    # For now, we'll simulate a successful payment
-    
-    users = load_users()
-    user_id = current_user['id']
-    
-    if users[user_id]['plan'] == 'premium':
-        return jsonify({'message': 'User already has premium plan'}), 400
-    
-    # Update user plan
-    users[user_id]['plan'] = 'premium'
-    save_users(users)
-    
-    return jsonify({
-        'message': 'Plan upgraded successfully',
-        'plan': 'premium'
-    }), 200 """
-
 @app.route('/api/user/history', methods=['GET'])
 @token_required
-def get_chat_history(current_user):
+def get_user_chat_history(current_user):
     """Get user's chat history"""
-    # This would require implementing chat history storage
-    # For now, we'll return a placeholder
-    return jsonify({
-        'history': [
-            {
-                'id': '1',
-                'timestamp': (datetime.datetime.utcnow() - datetime.timedelta(days=1)).isoformat(),
-                'messages': [
-                    {'sender': 'user', 'text': 'What is Executive Order 13984?'},
-                    {'sender': 'bot', 'text': 'Executive Order 13984 was issued on January 19, 2021, and...'} 
-                ]
-            }
-        ]
-    }), 200
+    # Get actual chat history from database
+    limit = request.args.get('limit', 10, type=int)
+    history = get_chat_history(current_user['id'], limit)
+    
+    return jsonify({'history': history}), 200
+
+@app.route('/api/user/history/<conversation_id>', methods=['GET'])
+@token_required
+def get_specific_conversation(current_user, conversation_id):
+    """Get a specific conversation"""
+    conversation = get_conversation(current_user['id'], conversation_id)
+    
+    if not conversation:
+        return jsonify({'error': 'Conversation not found'}), 404
+    
+    return jsonify(conversation), 200
+
+@app.route('/api/user/history/<conversation_id>', methods=['DELETE'])
+@token_required
+def delete_specific_conversation(current_user, conversation_id):
+    """Delete a specific conversation"""
+    from src.database import delete_conversation
+    
+    success = delete_conversation(current_user['id'], conversation_id)
+    
+    if not success:
+        return jsonify({'error': 'Failed to delete conversation'}), 500
+    
+    return jsonify({'message': 'Conversation deleted successfully'}), 200
 
 # Admin routes
 @app.route('/api/admin/stats', methods=['GET'])
 def admin_stats():
     """Get usage statistics - secured by admin password"""
     admin_password = request.headers.get('X-Admin-Password')
+    client_ip = get_client_ip()
+    
+    if not admin_password or admin_password != ADMIN_PASSWORD:
+        if not is_admin_ip(client_ip):
+            return jsonify({'error': 'Unauthorized access'}), 401
+    
+    # Get usage data from database
+    from src.database import get_usage_stats
+    usage_data = get_usage_stats()
+    
+    return jsonify(usage_data), 200
+
+@app.route('/api/admin/set-admin', methods=['POST'])
+def set_admin_status():
+    """Set admin status for an IP"""
+    admin_password = request.headers.get('X-Admin-Password')
+    data = request.json
     
     if not admin_password or admin_password != ADMIN_PASSWORD:
         return jsonify({'error': 'Unauthorized access'}), 401
     
-    # Get usage data from your existing module
-    usage_data = get_usage_data()
+    if not data or 'ip' not in data:
+        return jsonify({'error': 'IP address is required'}), 400
     
-    return jsonify(usage_data), 200
+    ip = data['ip']
+    is_admin = data.get('is_admin', True)
+    
+    if is_admin:
+        add_admin_ip(ip)
+    else:
+        # Remove admin status - not implemented yet
+        pass
+    
+    return jsonify({'message': f"Admin status for {ip} set to {is_admin}"}), 200
+
 # Import the payment module
 try:
     from src.payment_integration import create_subscription_for_user, verify_subscription_status
@@ -384,8 +460,7 @@ except ImportError:
     STRIPE_AVAILABLE = False
     print("Stripe payment integration not available")
 
-# Add these new routes to your api.py file:
-
+# Payment routes
 @app.route('/api/payment/create-checkout', methods=['POST'])
 @token_required
 def create_checkout_session(current_user):
@@ -409,12 +484,7 @@ def create_checkout_session(current_user):
         
         # Save the Stripe customer ID to the user record
         if 'customer_id' in result:
-            users = load_users()
-            user_id = current_user['id']
-            
-            if user_id in users:
-                users[user_id]['stripe_customer_id'] = result['customer_id']
-                save_users(users)
+            update_user(current_user['id'], {'stripe_customer_id': result['customer_id']})
         
         return jsonify(result), 200
     except Exception as e:
@@ -442,12 +512,8 @@ def check_subscription_status(current_user):
         
         # If the user has an active subscription, make sure their plan is set to premium
         if status.get('has_active_subscription', False):
-            users = load_users()
-            user_id = current_user['id']
-            
-            if user_id in users and users[user_id]['plan'] != 'premium':
-                users[user_id]['plan'] = 'premium'
-                save_users(users)
+            if current_user['plan'] != 'premium':
+                update_user(current_user['id'], {'plan': 'premium'})
         
         return jsonify(status), 200
     except Exception as e:
@@ -487,13 +553,14 @@ def stripe_webhook():
             
             if customer_id:
                 # Find user with this customer ID
-                users = load_users()
+                users = get_users()
                 for user_id, user in users.items():
                     if user.get('stripe_customer_id') == customer_id:
                         # Update user plan to premium
-                        users[user_id]['plan'] = 'premium'
-                        users[user_id]['subscription_id'] = subscription_id
-                        save_users(users)
+                        update_user(user_id, {
+                            'plan': 'premium',
+                            'subscription_id': subscription_id
+                        })
                         break
         
         elif event_type == 'customer.subscription.deleted':
@@ -502,13 +569,14 @@ def stripe_webhook():
             
             if customer_id:
                 # Find user with this customer ID
-                users = load_users()
+                users = get_users()
                 for user_id, user in users.items():
                     if user.get('stripe_customer_id') == customer_id:
                         # Downgrade user to free plan
-                        users[user_id]['plan'] = 'free'
-                        users[user_id].pop('subscription_id', None)
-                        save_users(users)
+                        update_user(user_id, {
+                            'plan': 'free',
+                            'subscription_id': None
+                        })
                         break
         
         # Acknowledge receipt of the event
@@ -536,12 +604,7 @@ def upgrade_plan(current_user):
             
             # Save the Stripe customer ID to the user record
             if 'customer_id' in result:
-                users = load_users()
-                user_id = current_user['id']
-                
-                if user_id in users:
-                    users[user_id]['stripe_customer_id'] = result['customer_id']
-                    save_users(users)
+                update_user(current_user['id'], {'stripe_customer_id': result['customer_id']})
             
             return jsonify({
                 'message': 'Please complete the checkout process',
@@ -553,29 +616,74 @@ def upgrade_plan(current_user):
             return jsonify({'error': f'Error creating checkout session: {str(e)}'}), 500
     else:
         # If Stripe is not available, use the simulated payment
-        users = load_users()
-        user_id = current_user['id']
-        
-        if users[user_id]['plan'] == 'premium':
+        if current_user['plan'] == 'premium':
             return jsonify({'message': 'User already has premium plan'}), 400
         
         # Update user plan
-        users[user_id]['plan'] = 'premium'
-        save_users(users)
+        update_user(current_user['id'], {'plan': 'premium'})
         
         return jsonify({
             'message': 'Plan upgraded successfully',
             'plan': 'premium'
         }), 200
     
+@app.route('/api/user/usage', methods=['GET'])
+@token_required
+def get_user_usage_stats(current_user):
+    """Get usage statistics for the current user"""
+    # Import user limiter
+    from src.user_usage_limiter import UserUsageLimiter
+    user_limiter = UserUsageLimiter()
     
+    # Get user's usage data
+    usage_data = user_limiter.get_user_usage(current_user['id'])
+    
+    # Get the limits for context
+    prompt_limit = int(os.environ.get('USER_PROMPT_LIMIT', '50'))
+    token_limit = int(os.environ.get('USER_TOKEN_LIMIT', '25000'))
+    reset_period_hours = int(os.environ.get('RESET_PERIOD_HOURS', '24'))
+    
+    # Calculate time until reset if last_reset is available
+    time_until_reset = None
+    if usage_data.get('last_reset'):
+        try:
+            last_reset_time = datetime.datetime.fromisoformat(usage_data['last_reset'])
+            next_reset_time = last_reset_time + datetime.timedelta(hours=reset_period_hours)
+            time_until_reset = (next_reset_time - datetime.datetime.utcnow()).total_seconds()
+            
+            # Format as hours and minutes
+            if time_until_reset > 0:
+                hours = int(time_until_reset // 3600)
+                minutes = int((time_until_reset % 3600) // 60)
+                time_until_reset = f"{hours}h {minutes}m"
+            else:
+                time_until_reset = "Reset pending"
+        except Exception as e:
+            print(f"Error calculating reset time: {e}")
+            time_until_reset = "Unknown"
+    
+    # Return usage data with context
+    return jsonify({
+        'usage': {
+            'prompt_count': usage_data.get('prompt_count', 0),
+            'token_count': usage_data.get('token_count', 0),
+            'last_request': usage_data.get('last_request'),
+            'last_reset': usage_data.get('last_reset')
+        },
+        'limits': {
+            'prompt_limit': prompt_limit,
+            'token_limit': token_limit,
+            'reset_period_hours': reset_period_hours,
+            'time_until_reset': time_until_reset
+        },
+        'remaining': {
+            'prompts': max(0, prompt_limit - usage_data.get('prompt_count', 0)),
+            'tokens': max(0, token_limit - usage_data.get('token_count', 0))
+        },
+        # Include the most recent 10 requests for historical context
+        'recent_requests': usage_data.get('request_history', [])[-10:]
+    }), 200
+   
 if __name__ == '__main__':
-    # Ensure the user database exists
-    if not os.path.exists(USER_DB_FILE):
-        save_users({})
-    
-    # Update existing user records with Stripe fields
-    update_user_schema()
-    
     # Run the Flask app
     app.run(debug=True, port=5000)

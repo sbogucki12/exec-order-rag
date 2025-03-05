@@ -1,80 +1,54 @@
+// components/PaymentForm.js
 import React, { useState } from 'react';
-import { userService } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
-const PaymentForm = ({ onSuccess, onCancel }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleUpgrade = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      // Get the current URL base for success/cancel redirects
-      const baseUrl = window.location.origin;
-      
-      // Call the API to create a checkout session
-      const response = await userService.upgradeAccount({
-        success_url: `${baseUrl}/subscription/success`,
-        cancel_url: `${baseUrl}/subscription/cancel`
-      });
-
-      // Redirect to the Stripe checkout page
-      if (response && response.checkout_url) {
-        window.location.href = response.checkout_url;
-      } else {
-        // For demo or if Stripe is not configured, handle success directly
-        if (response && response.message === 'Plan upgraded successfully') {
-          onSuccess();
-        } else {
-          setError('Invalid response from server');
-        }
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      setError(error.response?.data?.error || 'Error processing payment. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+const PaymentForm = () => {
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const navigate = useNavigate();
+  
+  const handleUpgradeClick = (e) => {
+    e.preventDefault();
+    setShowComingSoon(true);
   };
-
+  
+  const handleClose = () => {
+    setShowComingSoon(false);
+  };
+  
   return (
-    <div className="payment-form">
+    <div className="payment-form-container">
       <h2>Upgrade to Premium</h2>
+      <p>Upgrade to our premium plan to enjoy unlimited access to our Executive Orders chatbot.</p>
       
-      <div className="subscription-options">
-        <div className="subscription-option selected">
-          <div className="subscription-option-header">
-            <h4>Premium Plan</h4>
-            <span className="subscription-option-price">$9.99/month</span>
-          </div>
-          <div className="subscription-option-features">
-            <p>• Unlimited queries</p>
-            <p>• Enhanced data access</p>
-            <p>• Priority support</p>
-          </div>
+      <div className="pricing-container">
+        <div className="pricing-card">
+          <h3>Premium Plan</h3>
+          <p className="price">$9.99/month</p>
+          <ul>
+            <li>Unlimited prompts</li>
+            <li>Priority processing</li>
+            <li>Advanced features</li>
+            <li>Chat history storage</li>
+          </ul>
+          <button 
+            className="upgrade-button"
+            onClick={handleUpgradeClick}
+          >
+            Upgrade Now
+          </button>
         </div>
       </div>
       
-      {error && <div className="error-message">{error}</div>}
-      
-      <div className="form-actions">
-        <button 
-          onClick={handleUpgrade} 
-          className="primary-button"
-          disabled={loading}
-        >
-          {loading ? 'Processing...' : 'Upgrade Now'}
-        </button>
-        
-        <button 
-          onClick={onCancel} 
-          className="secondary-button"
-          disabled={loading}
-        >
-          Cancel
-        </button>
-      </div>
+      {showComingSoon && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Coming Soon!</h3>
+            <p>Our payment system is currently under development. This feature will be available soon!</p>
+            <p>Thank you for your interest in our premium plan.</p>
+            <button onClick={handleClose} className="close-button">Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

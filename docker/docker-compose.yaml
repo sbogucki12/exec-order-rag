@@ -1,49 +1,73 @@
 version: '3.8'
 
 services:
-  # Backend Flask API service
+  # API Backend
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/backend/Dockerfile
     ports:
       - "5000:5000"
-    environment:
-      - FLASK_ENV=production
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
-      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
     volumes:
-      - ./data:/app/data
-    restart: always
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DATABASE=eo_chatbot
+    depends_on:
+      - mongodb
+    networks:
+      - eo-chatbot-network
 
-  # Frontend React service
+  # React Frontend
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/frontend/Dockerfile
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
       - backend
-    restart: always
+    networks:
+      - eo-chatbot-network
 
-  # Admin Streamlit service (optional, can be disabled in production)
+  # MongoDB Database
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - eo-chatbot-network
+    environment:
+      - MONGO_INITDB_DATABASE=eo_chatbot
+    command: --wiredTigerCacheSizeGB 1.0  # Reduce memory usage for development
+
+  # Admin Dashboard (Streamlit)
   admin:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.admin
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    command: python scripts/run_admin.py
     ports:
       - "8501:8501"
-    environment:
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
-      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
     volumes:
-      - ./data:/app/data
-    command: streamlit run pages/01_Admin_Dashboard.py
-    restart: always
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DATABASE=eo_chatbot
+    depends_on:
+      - mongodb
+    networks:
+      - eo-chatbot-network
+
+networks:
+  eo-chatbot-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:

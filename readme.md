@@ -20,6 +20,8 @@ A Retrieval Augmented Generation (RAG) system for accessing and querying informa
   - Made the admin dashboard independently accessible via direct URL
   - Ensured proper state persistence with localStorage
 - **Next**:
+- - Add Coming Soon to upgrade to Premium option
+- - Throttle by user email
   - Deploy to production environment
   - Set up webhook handling for Stripe events
   - Implement email notifications for subscription changes

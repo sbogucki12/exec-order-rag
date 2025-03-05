@@ -4,8 +4,20 @@ import { useNavigate } from 'react-router-dom';
 
 const UserMenu = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate(); // Add this hook for navigation
+
+  const handleUpgradeClick = (e) => {
+    e.preventDefault();
+    setShowComingSoon(true);
+    setIsOpen(false); // Close the dropdown menu
+  }
+  
+  // Add this function to close the modal
+  const handleCloseModal = () => {
+    setShowComingSoon(false);
+  };
 
   // Get initials from email for avatar
   const getInitials = (email) => {
@@ -41,7 +53,7 @@ const UserMenu = ({ user, onLogout }) => {
         </div>
         <span>{user.email}</span>
       </div>
-
+  
       {isOpen && (
         <div className="user-dropdown">
           <ul>
@@ -51,11 +63,27 @@ const UserMenu = ({ user, onLogout }) => {
             </li>
             <li onClick={() => handleNavigation('/history')}>View History</li>
             <li onClick={() => handleNavigation('/account')}>Account Settings</li>
-            {user.plan === 'free' && (
-              <li onClick={() => handleNavigation('/account')}>Upgrade to Premium</li>
+            {user && user.plan === 'free' && (
+              <li>
+                <a href="#upgrade" onClick={handleUpgradeClick}>
+                  Upgrade to Premium
+                </a>
+              </li>
             )}
             <li onClick={onLogout}>Sign Out</li>
           </ul>
+        </div>
+      )}
+      
+      {/* Coming Soon Modal */}
+      {showComingSoon && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Coming Soon!</h3>
+            <p>Our payment system is currently under development. This feature will be available soon!</p>
+            <p>Thank you for your interest in our premium plan.</p>
+            <button onClick={handleCloseModal} className="close-button">Close</button>
+          </div>
         </div>
       )}
     </div>

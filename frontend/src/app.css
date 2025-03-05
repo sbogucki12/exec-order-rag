@@ -649,3 +649,122 @@
 .clear-button:hover {
   color: #4299e1;  /* Using your secondary color */
 }
+
+/* Add these styles to your CSS file */
+
+.payment-form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.pricing-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.pricing-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  width: 300px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.pricing-card h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.pricing-card .price {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c7be5;
+  margin: 15px 0;
+}
+
+.pricing-card ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.pricing-card ul li {
+  padding: 8px 0;
+  position: relative;
+  padding-left: 25px;
+}
+
+.pricing-card ul li:before {
+  content: "✓";
+  color: #2c7be5;
+  position: absolute;
+  left: 0;
+}
+
+.upgrade-button {
+  background-color: #2c7be5;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.upgrade-button:hover {
+  background-color: #1a68d1;
+}
+
+/* Modal Overlay Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 80%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #2c7be5;
+}
+
+.modal-content p {
+  margin: 15px 0;
+  line-height: 1.5;
+}
+
+.close-button {
+  background-color: #2c7be5;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  margin-top: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover {
+  background-color: #1a68d1;
+}
