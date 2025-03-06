@@ -6,7 +6,7 @@ langchain-core==0.1.16
 sentence-transformers==2.2.2
 tiktoken==0.5.2
 huggingface_hub==0.16.4
-transformers==4.30.2
+transformers==4.48.0
 
 # Document processing
 pypdf==3.17.1
