@@ -1,6 +1,7 @@
 // components/LoginModal.js
 import React, { useState } from 'react';
 import { authService } from '../services/api';
+import '../app.css'; // Make sure you have the CSS
 
 const LoginModal = ({ onClose, onLogin }) => {
   const [email, setEmail] = useState('');
@@ -17,8 +18,11 @@ const LoginModal = ({ onClose, onLogin }) => {
   
     try {
       if (isSignUp) {
+        // Always use 'free' plan (premium is coming soon)
+        const planToUse = 'free';
+        
         // Register new user
-        const data = await authService.register(email, password, selectedPlan);
+        const data = await authService.register(email, password, planToUse);
         // Save token and user data
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
@@ -96,23 +100,29 @@ const LoginModal = ({ onClose, onLogin }) => {
                   <span className="subscription-option-price">$0/month</span>
                 </div>
                 <div className="subscription-option-features">
-                  <p>• 5 queries per day</p>
+                  <p>• 5 queries per month</p>
                   <p>• Basic access to Executive Orders data</p>
                 </div>
               </div>
               
-              <div 
-                className={`subscription-option ${selectedPlan === 'premium' ? 'selected' : ''}`}
-                onClick={() => setSelectedPlan('premium')}
-              >
+              {/* Premium Plan with Coming Soon badge */}
+              <div className="subscription-option premium disabled">
+                <div className="coming-soon-badge">Coming Soon</div>
                 <div className="subscription-option-header">
                   <h4>Premium Plan</h4>
-                  <span className="subscription-option-price">$∞.99/month</span>
+                  <span className="subscription-option-price">$9.99/month</span>
                 </div>
                 <div className="subscription-option-features">
-                  <p>• 500 queries  a day</p>
+                  <p>• Unlimited queries</p>
+                  <p>• Priority support</p>
+                  <p>• Enhanced search capabilities</p>
                 </div>
               </div>
+              
+              <p className="plan-note">
+                * The Premium plan will be available soon. Sign up for the Free plan now, 
+                and you'll be among the first to know when Premium launches!
+              </p>
             </div>
           )}
           

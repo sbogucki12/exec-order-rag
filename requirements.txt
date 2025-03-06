@@ -47,6 +47,7 @@ werkzeug==2.3.7
 
 database
 pymongo==4.11.2
+pyodbc=5.2.0
 
 
 

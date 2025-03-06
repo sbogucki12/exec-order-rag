@@ -768,3 +768,319 @@
 .close-button:hover {
   background-color: #1a68d1;
 }
+
+/* DeleteAccount.css */
+
+.delete-account-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.delete-account-container h2 {
+  margin-top: 0;
+  color: #d32f2f;
+}
+
+.warning {
+  background-color: #ffebee;
+  border-left: 4px solid #d32f2f;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  border-radius: 4px;
+}
+
+.confirmation-input {
+  margin: 1.5rem 0;
+}
+
+.confirmation-input label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.confirmation-input input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+}
+
+.cancel-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.danger-button,
+.delete-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.danger-button:hover,
+.delete-button:hover {
+  background-color: #b71c1c;
+}
+
+.cancel-button:hover {
+  background-color: #e0e0e0;
+}
+
+.danger-button:disabled,
+.delete-button:disabled,
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Add these styles for the list */
+.delete-account-container ul {
+  background-color: #f5f5f5;
+  padding: 1rem 1rem 1rem 2rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+.delete-account-container li {
+  margin-bottom: 0.5rem;
+}
+
+/* LoginModal.css - Add these styles to your existing CSS */
+
+/* Styling for coming soon badge */
+.coming-soon-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #fd7e14;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transform: rotate(5deg);
+  z-index: 1;
+}
+
+/* Disabled plan styling */
+.subscription-option.disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+  position: relative;
+  background-color: #f9f9f9;
+  border-color: #ddd !important;
+}
+
+.subscription-option.disabled:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Note below plan selection */
+.plan-note {
+  text-align: center;
+  margin-top: 1rem;
+  font-style: italic;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Make sure the subscription option has relative positioning for badge placement */
+.subscription-option {
+  position: relative;
+}
+
+/* If not already in your CSS, add these improvements for the plan selection */
+.subscription-options {
+  margin: 1.5rem 0;
+}
+
+.subscription-option {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subscription-option:hover:not(.disabled) {
+  border-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.subscription-option.selected {
+  border-color: #0056b3;
+  border-width: 2px;
+}
+
+.subscription-option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.subscription-option-header h4 {
+  margin: 0;
+  color: #333;
+}
+
+.subscription-option-price {
+  font-weight: bold;
+  color: #0056b3;
+}
+
+.subscription-option-features p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+/* PremiumComingSoonModal.css */
+.premium-modal-content {
+  background-color: white;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.premium-content {
+  padding: 1.5rem;
+}
+
+.premium-icon {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-20px);
+  }
+  60% {
+    transform: translateY(-10px);
+  }
+}
+
+.premium-message {
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.premium-features {
+  background-color: #f8f9fa;
+  padding: 1.2rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.premium-features h3 {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  color: #0056b3;
+}
+
+.premium-features ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.premium-features li {
+  margin-bottom: 0.5rem;
+  color: #444;
+}
+
+.premium-notification {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.premium-notification p {
+  margin-bottom: 0.8rem;
+  color: #555;
+}
+
+.notify-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.notify-button:hover {
+  background-color: #218838;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.continue-button {
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.continue-button:hover {
+  background-color: #003d82;
+}

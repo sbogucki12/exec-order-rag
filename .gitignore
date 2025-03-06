@@ -173,3 +173,24 @@ format_debug_logs/
 # MongoDB Compass and tools
 .mongodb/
 .mongorc.js
+
+# Azure SQL Database specific
+code_scan_results.txt
+cleanup_report.txt
+migration.log
+sql_connection_string.txt
+
+# Database credentials and config
+.env.template
+sql_config.json
+
+# Testing files
+test_db_connection.py
+
+# Temporary database migration files
+db_migration/
+**/db_migration_logs/
+
+# Database backup files
+*.bak
+*.bacpac

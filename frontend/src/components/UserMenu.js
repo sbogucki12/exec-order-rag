@@ -8,8 +8,7 @@ const UserMenu = ({ user, onLogout }) => {
   const menuRef = useRef(null);
   const navigate = useNavigate(); // Add this hook for navigation
 
-  const handleUpgradeClick = (e) => {
-    e.preventDefault();
+  const handleUpgradeClick = () => {
     setShowComingSoon(true);
     setIsOpen(false); // Close the dropdown menu
   }
@@ -64,11 +63,7 @@ const UserMenu = ({ user, onLogout }) => {
             <li onClick={() => handleNavigation('/history')}>View History</li>
             <li onClick={() => handleNavigation('/account')}>Account Settings</li>
             {user && user.plan === 'free' && (
-              <li>
-                <a href="#upgrade" onClick={handleUpgradeClick}>
-                  Upgrade to Premium
-                </a>
-              </li>
+              <li onClick={handleUpgradeClick}>Upgrade to Premium</li>
             )}
             <li onClick={onLogout}>Sign Out</li>
           </ul>

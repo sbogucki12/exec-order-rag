@@ -133,14 +133,25 @@ def update_user(user_id: str, update_data: Dict) -> bool:
         print(f"Error updating user: {e}")
         return False
 
+"""
+Add this function to your src/database.py file
+"""
+
 def delete_user(user_id: str) -> bool:
-    """Delete a user"""
+    """
+    Permanently delete a user from the database.
+    
+    Args:
+        user_id (str): The ID of the user to delete
+        
+    Returns:
+        bool: True if the user was successfully deleted, False otherwise
+    """
     try:
-        db = get_db()
-        result = db.users.delete_one({"_id": ObjectId(user_id)})
+        result = db.users.delete_one({"_id": user_id})
         return result.deleted_count > 0
     except Exception as e:
-        print(f"Error deleting user: {e}")
+        logger.error(f"Error deleting user {user_id}: {e}")
         return False
 
 # Chat history functions

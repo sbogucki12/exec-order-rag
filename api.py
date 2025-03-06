@@ -19,12 +19,30 @@ import sys
 sys.path.append('.')  # Add the current directory to path
 from src.usage_limiter import UsageLimiter
 from src.usage_integration import get_usage_data, check_admin_status
-from src.database import (
+""" from src.database import (
     get_users, get_user_by_id, get_user_by_email, create_user, update_user,
     save_chat_message, get_chat_history, get_conversation,
     track_usage, check_usage_limits, migrate_from_json, setup_admin_collection,
     is_admin_ip, add_admin_ip
-)
+) """
+# Import database configuration
+from src.db_config import DB_TYPE
+
+# Import the appropriate database module based on configuration
+if DB_TYPE == 'mongodb':
+    from src.database import (
+        get_users, get_user_by_id, get_user_by_email, create_user, update_user,
+        save_chat_message, get_chat_history, get_conversation, delete_conversation,
+        track_usage, check_usage_limits, migrate_from_json, setup_admin_collection,
+        is_admin_ip, add_admin_ip, delete_user
+    )
+else:
+    from src.sql_database import (
+        get_users, get_user_by_id, get_user_by_email, create_user, update_user,
+        save_chat_message, get_chat_history, get_conversation, delete_conversation,
+        track_usage, check_usage_limits, migrate_from_json, setup_admin_collection,
+        is_admin_ip, add_admin_ip, delete_user, verify_tables_exist
+    )
 
 # Import non-Streamlit chatbot processing function
 try:
@@ -75,16 +93,17 @@ except Exception as e:
             pass
     usage_limiter = DummyLimiter()
 
-# Set up the admin collection for storing configuration
+# Set up the admin collection/table for storing configuration
 setup_admin_collection()
+verify_tables_exist() 
 
-# Migrate existing user data from JSON to MongoDB (only if JSON file exists)
+# Migrate existing user data from JSON if file exists
 if os.path.exists(USER_DB_FILE):
     try:
-        print(f"Attempting to migrate users from {USER_DB_FILE} to MongoDB...")
+        print(f"Attempting to migrate users from {USER_DB_FILE} to database...")
         migrate_from_json(USER_DB_FILE)
         print("Migration completed successfully.")
-        # Optionally, rename the old file to avoid future migrations
+        # Rename the old file to avoid future migrations
         os.rename(USER_DB_FILE, f"{USER_DB_FILE}.migrated")
     except Exception as e:
         print(f"Error during migration: {e}")
@@ -238,19 +257,19 @@ def chat():
             # Token is invalid, but we'll still process as anonymous
             pass
     
-    # Check usage limits based on user if authenticated, otherwise use IP
+    # For authenticated users
     if user:
-        # Import and use user-based limiter
-        from src.user_usage_limiter import UserUsageLimiter
-        user_limiter = UserUsageLimiter()
-        
         # Check if user is premium
         if user['plan'] != 'premium':
             try:
-                is_allowed, reason = user_limiter.check_limits(user['id'])
-                if not is_allowed:
+                # Use the enhanced check_user_limit function that returns more detailed information
+                from src.user_usage_limiter import check_user_limit
+                
+                limit_check = check_user_limit(user['id'])
+                if not limit_check['allowed']:
                     return jsonify({
-                        'error': f'You have reached your daily usage limit. {reason}'
+                        'error': f'You have reached your usage limit. {limit_check["message"]}',
+                        'remaining': limit_check.get('remaining', 0)
                     }), 429
             except Exception as e:
                 print(f"Warning: Error checking user usage limits: {str(e)}")
@@ -259,13 +278,13 @@ def chat():
         # Fall back to IP-based limiting for anonymous users
         try:
             # Get limits from environment or use defaults
-            prompt_limit = int(os.environ.get('PROMPT_LIMIT', 20))
-            token_limit = int(os.environ.get('TOKEN_LIMIT', 10000))
+            prompt_limit = int(os.environ.get('PROMPT_LIMIT', 5))  # Reduced default to 5
+            token_limit = int(os.environ.get('TOKEN_LIMIT', 2500))
             
             is_allowed, reason = check_usage_limits(client_ip, prompt_limit, token_limit)
             if not is_allowed:
                 return jsonify({
-                    'error': f'You have reached your daily usage limit. {reason}'
+                    'error': f'You have reached your usage limit. {reason}'
                 }), 429
         except Exception as e:
             print(f"Warning: Error checking usage limits: {str(e)}")
@@ -627,6 +646,37 @@ def upgrade_plan(current_user):
             'plan': 'premium'
         }), 200
     
+@app.route('/api/user/delete-account', methods=['DELETE'])
+@token_required
+def delete_user_account(current_user):
+    user_id = current_user['id']
+    
+    try:
+        # First, check if this is a premium user with an active subscription
+        if current_user.get('plan') == 'premium' and current_user.get('stripe_customer_id'):
+            # If Stripe integration is available, we should cancel their subscription
+            if STRIPE_AVAILABLE and current_user.get('subscription_id'):
+                try:
+                    from src.payment_integration import cancel_subscription
+                    cancel_subscription(current_user['subscription_id'])
+                    print(f"Cancelled subscription for user {user_id}")
+                except Exception as e:
+                    print(f"Failed to cancel subscription: {e}")
+                    # Continue with deletion even if subscription cancellation fails
+        
+        # Delete the user account (this will delete all associated data)
+        success = delete_user(user_id)
+        
+        if not success:
+            return jsonify({"error": "Failed to delete user account"}), 500
+        
+        print(f"Successfully deleted user account {user_id}")
+        return jsonify({"message": "Account successfully deleted"}), 200
+        
+    except Exception as e:
+        print(f"Error deleting user account {user_id}: {e}")
+        return jsonify({"error": f"Failed to delete account: {str(e)}"}), 500
+
 @app.route('/api/user/usage', methods=['GET'])
 @token_required
 def get_user_usage_stats(current_user):
